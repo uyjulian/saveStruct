@@ -1,4 +1,5 @@
 #include "ncbind/ncbind.hpp"
+#include "istream_compat.h"
 
 #include "../json/Writer.hpp"
 
@@ -28,12 +29,12 @@ static iTJSDispatch2* getArrayChildObject(const tjs_char *name)
 		// TJSCreateArrayObjectでArrayクラスオブジェクトが取れるのでそれを利用する
 		iTJSDispatch2 *dummy = TJSCreateArrayObject(&ArrayClass);
 		dummy->Release();
-		if (!ArrayClass) TVPThrowExceptionMessage(L"can't get Array object");
+		if (!ArrayClass) TVPThrowExceptionMessage(TJS_W("can't get Array object"));
 	}
 
 	tTJSVariant val;
 	if (TJS_FAILED(ArrayClass->PropGet(TJS_IGNOREPROP, name, NULL, &val, ArrayClass)))
-		TVPThrowExceptionMessage(L"can't get Array.%1 member", ttstr(name));
+		TVPThrowExceptionMessage(TJS_W("can't get Array.%1 member"), ttstr(name));
 
 	return val.AsObject();
 }
@@ -53,7 +54,7 @@ static tjs_int getArrayCount(iTJSDispatch2 *array) {
 }
 
 // Array.func 呼び出し
-static inline tjs_error invokeArrayFunc(iTJSDispatch2 *array, iTJSDispatch2* &func, tjs_char *const method,
+static inline tjs_error invokeArrayFunc(iTJSDispatch2 *array, iTJSDispatch2* &func, const tjs_char * method,
 								 tTJSVariant *result, tjs_int numparams, tTJSVariant **param)
 {
 	if (!func) {
@@ -120,7 +121,7 @@ public:
 
 		writer->write((tjs_char)'"');
 		writer->write(escape.c_str());
-		writer->write(L"\"=>");
+		writer->write(TJS_W("\"=>"));
 		getVariantString(value, writer, option);
 	}
 
@@ -146,7 +147,7 @@ static void getDictString(iTJSDispatch2 *dict, IWriter *writer, tjs_uint32 optio
 {
 	if (option & OPTION_CONST) writer->write(TJS_CONST);
 
-	writer->write(L"%[");
+	writer->write(TJS_W("%["));
 	DictMemberDispCaller *caller = new DictMemberDispCaller(writer, option);
 	tTJSVariantClosure closure(caller);
 	tjs_uint32 novalue = (option & OPTION_KEYSORT) ? TJS_ENUM_NO_VALUE : 0; // ソート処理が入る場合はvalue不要
@@ -187,8 +188,8 @@ getVariantString(const tTJSVariant &var, IWriter *writer, tjs_uint32 option)
 	{
 		iTJSDispatch2 *obj = var.AsObjectNoAddRef();
 		if (obj == NULL) {
-			writer->write(L"null");
-		} else if (obj->IsInstanceOf(TJS_IGNOREPROP,NULL,NULL,L"Array",obj) == TJS_S_TRUE) {
+			writer->write(TJS_W("null"));
+		} else if (obj->IsInstanceOf(TJS_IGNOREPROP,NULL,NULL,TJS_W("Array"),obj) == TJS_S_TRUE) {
 			getArrayString(obj, writer, option);
 		} else {
 			getDictString(obj, writer, option);
@@ -197,8 +198,8 @@ getVariantString(const tTJSVariant &var, IWriter *writer, tjs_uint32 option)
 	else
 	{
 		if (!(option & (OPTION_CONST|OPTION_NOPREFIX))) { // (const)時はエラーになるのでつけない
-			if      (type == tvtInteger) writer->write(L"int ");
-			else if (type == tvtReal)    writer->write(L"real ");
+			if      (type == tvtInteger) writer->write(TJS_W("int "));
+			else if (type == tvtReal)    writer->write(TJS_W("real "));
 		}
 		writer->write(TJSVariantToExpressionString(var).c_str());
 	}
@@ -316,7 +317,7 @@ public:
 						   numparams > 2 ? (int)*param[2] : 0
 						   );
 		writer.hex = true;
-		getDictString(objthis, &writer, numparams > 3 ? (int)*param[3] : 0);
+		getDictString(objthis, (IWriter*)&writer, numparams > 3 ? (int)*param[3] : 0);
 		return TJS_S_OK;
 	}
 	
@@ -388,10 +389,14 @@ static void PostRegistCallback()
 	// ssoオプション値登録
 	iTJSDispatch2 *global = TVPGetScriptDispatch();
 	if (global) {
-		global->PropSet(TJS_MEMBERENSURE|TJS_IGNOREPROP, TJS_W("ssoIndent"), NULL, &tTJSVariant(OPTION_INDENT),  global);
-		global->PropSet(TJS_MEMBERENSURE|TJS_IGNOREPROP, TJS_W("ssoConst"),  NULL, &tTJSVariant(OPTION_CONST),   global);
-		global->PropSet(TJS_MEMBERENSURE|TJS_IGNOREPROP, TJS_W("ssoSort"),   NULL, &tTJSVariant(OPTION_KEYSORT), global);
-		global->PropSet(TJS_MEMBERENSURE|TJS_IGNOREPROP, TJS_W("ssoHidden"), NULL, &tTJSVariant(OPTION_HIDDEN), global);
+		tTJSVariant tmp_ident(OPTION_INDENT);
+		tTJSVariant tmp_const(OPTION_CONST);
+		tTJSVariant tmp_keysort(OPTION_KEYSORT);
+		tTJSVariant tmp_hidden(OPTION_HIDDEN);
+		global->PropSet(TJS_MEMBERENSURE|TJS_IGNOREPROP, TJS_W("ssoIndent"), NULL, &tmp_ident,   global);
+		global->PropSet(TJS_MEMBERENSURE|TJS_IGNOREPROP, TJS_W("ssoConst"),  NULL, &tmp_const,   global);
+		global->PropSet(TJS_MEMBERENSURE|TJS_IGNOREPROP, TJS_W("ssoSort"),   NULL, &tmp_keysort, global);
+		global->PropSet(TJS_MEMBERENSURE|TJS_IGNOREPROP, TJS_W("ssoHidden"), NULL, &tmp_hidden,  global);
 		global->Release();
 	}
 }
