@@ -1,6 +1,6 @@
 #include "ncbind/ncbind.hpp"
 
-#include "../json/Writer.hpp"
+#include "Writer.hpp"
 
 #define OPTION_INDENT  (1<<0)
 #define OPTION_CONST   (1<<1)
