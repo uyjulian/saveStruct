@@ -388,10 +388,14 @@ static void PostRegistCallback()
 	// ssoオプション値登録
 	iTJSDispatch2 *global = TVPGetScriptDispatch();
 	if (global) {
-		global->PropSet(TJS_MEMBERENSURE|TJS_IGNOREPROP, TJS_W("ssoIndent"), NULL, &tTJSVariant(OPTION_INDENT),  global);
-		global->PropSet(TJS_MEMBERENSURE|TJS_IGNOREPROP, TJS_W("ssoConst"),  NULL, &tTJSVariant(OPTION_CONST),   global);
-		global->PropSet(TJS_MEMBERENSURE|TJS_IGNOREPROP, TJS_W("ssoSort"),   NULL, &tTJSVariant(OPTION_KEYSORT), global);
-		global->PropSet(TJS_MEMBERENSURE|TJS_IGNOREPROP, TJS_W("ssoHidden"), NULL, &tTJSVariant(OPTION_HIDDEN), global);
+		tTJSVariant option_indent_variant(OPTION_INDENT);
+		global->PropSet(TJS_MEMBERENSURE|TJS_IGNOREPROP, TJS_W("ssoIndent"), NULL, &option_indent_variant,  global);
+		tTJSVariant option_const_variant(OPTION_CONST);
+		global->PropSet(TJS_MEMBERENSURE|TJS_IGNOREPROP, TJS_W("ssoConst"),  NULL, &option_const_variant,   global);
+		tTJSVariant option_keysort_variant(OPTION_KEYSORT);
+		global->PropSet(TJS_MEMBERENSURE|TJS_IGNOREPROP, TJS_W("ssoSort"),   NULL, &option_keysort_variant, global);
+		tTJSVariant option_hidden_variant(OPTION_HIDDEN);
+		global->PropSet(TJS_MEMBERENSURE|TJS_IGNOREPROP, TJS_W("ssoHidden"), NULL, &option_hidden_variant,  global);
 		global->Release();
 	}
 }
