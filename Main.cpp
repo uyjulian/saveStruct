@@ -3,6 +3,7 @@
 #if 1
 #include "Writer.hpp"
 #else
+typedef unsigned long ULONG;
 #include "../json/Writer.hpp"
 #endif
 
@@ -32,12 +33,12 @@ static iTJSDispatch2* getArrayChildObject(const tjs_char *name)
 		// TJSCreateArrayObjectでArrayクラスオブジェクトが取れるのでそれを利用する
 		iTJSDispatch2 *dummy = TJSCreateArrayObject(&ArrayClass);
 		dummy->Release();
-		if (!ArrayClass) TVPThrowExceptionMessage(L"can't get Array object");
+		if (!ArrayClass) TVPThrowExceptionMessage(TJS_W("can't get Array object"));
 	}
 
 	tTJSVariant val;
 	if (TJS_FAILED(ArrayClass->PropGet(TJS_IGNOREPROP, name, NULL, &val, ArrayClass)))
-		TVPThrowExceptionMessage(L"can't get Array.%1 member", ttstr(name));
+		TVPThrowExceptionMessage(TJS_W("can't get Array.%1 member"), ttstr(name));
 
 	return val.AsObject();
 }
@@ -124,7 +125,7 @@ public:
 
 		writer->write((tjs_char)'"');
 		writer->write(escape.c_str());
-		writer->write(L"\"=>");
+		writer->write(TJS_W("\"=>"));
 		getVariantString(value, writer, option);
 	}
 
@@ -150,7 +151,7 @@ static void getDictString(iTJSDispatch2 *dict, IWriter *writer, tjs_uint32 optio
 {
 	if (option & OPTION_CONST) writer->write(TJS_CONST);
 
-	writer->write(L"%[");
+	writer->write(TJS_W("%["));
 	DictMemberDispCaller *caller = new DictMemberDispCaller(writer, option);
 	tTJSVariantClosure closure(caller);
 	tjs_uint32 novalue = (option & OPTION_KEYSORT) ? TJS_ENUM_NO_VALUE : 0; // ソート処理が入る場合はvalue不要
@@ -191,8 +192,8 @@ getVariantString(const tTJSVariant &var, IWriter *writer, tjs_uint32 option)
 	{
 		iTJSDispatch2 *obj = var.AsObjectNoAddRef();
 		if (obj == NULL) {
-			writer->write(L"null");
-		} else if (obj->IsInstanceOf(TJS_IGNOREPROP,NULL,NULL,L"Array",obj) == TJS_S_TRUE) {
+			writer->write(TJS_W("null"));
+		} else if (obj->IsInstanceOf(TJS_IGNOREPROP,NULL,NULL,TJS_W("Array"),obj) == TJS_S_TRUE) {
 			getArrayString(obj, writer, option);
 		} else {
 			getDictString(obj, writer, option);
@@ -201,8 +202,8 @@ getVariantString(const tTJSVariant &var, IWriter *writer, tjs_uint32 option)
 	else
 	{
 		if (!(option & (OPTION_CONST|OPTION_NOPREFIX))) { // (const)時はエラーになるのでつけない
-			if      (type == tvtInteger) writer->write(L"int ");
-			else if (type == tvtReal)    writer->write(L"real ");
+			if      (type == tvtInteger) writer->write(TJS_W("int "));
+			else if (type == tvtReal)    writer->write(TJS_W("real "));
 		}
 		writer->write(TJSVariantToExpressionString(var).c_str());
 	}
@@ -392,14 +393,15 @@ static void PostRegistCallback()
 	// ssoオプション値登録
 	iTJSDispatch2 *global = TVPGetScriptDispatch();
 	if (global) {
-		tTJSVariant option_indent_variant(OPTION_INDENT);
-		global->PropSet(TJS_MEMBERENSURE|TJS_IGNOREPROP, TJS_W("ssoIndent"), NULL, &option_indent_variant,  global);
-		tTJSVariant option_const_variant(OPTION_CONST);
-		global->PropSet(TJS_MEMBERENSURE|TJS_IGNOREPROP, TJS_W("ssoConst"),  NULL, &option_const_variant,   global);
-		tTJSVariant option_keysort_variant(OPTION_KEYSORT);
-		global->PropSet(TJS_MEMBERENSURE|TJS_IGNOREPROP, TJS_W("ssoSort"),   NULL, &option_keysort_variant, global);
-		tTJSVariant option_hidden_variant(OPTION_HIDDEN);
-		global->PropSet(TJS_MEMBERENSURE|TJS_IGNOREPROP, TJS_W("ssoHidden"), NULL, &option_hidden_variant,  global);
+		tTJSVariant option_indent(OPTION_INDENT);
+		tTJSVariant option_const(OPTION_CONST);
+		tTJSVariant option_keysort(OPTION_KEYSORT);
+		tTJSVariant option_hidden(OPTION_HIDDEN);
+
+		global->PropSet(TJS_MEMBERENSURE|TJS_IGNOREPROP, TJS_W("ssoIndent"), NULL, &option_indent,  global);
+		global->PropSet(TJS_MEMBERENSURE|TJS_IGNOREPROP, TJS_W("ssoConst"),  NULL, &option_const,   global);
+		global->PropSet(TJS_MEMBERENSURE|TJS_IGNOREPROP, TJS_W("ssoSort"),   NULL, &option_keysort, global);
+		global->PropSet(TJS_MEMBERENSURE|TJS_IGNOREPROP, TJS_W("ssoHidden"), NULL, &option_hidden, global);
 		global->Release();
 	}
 }
