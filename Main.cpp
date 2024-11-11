@@ -393,6 +393,7 @@ static void PostRegistCallback()
 	// ssoオプション値登録
 	iTJSDispatch2 *global = TVPGetScriptDispatch();
 	if (global) {
+
 		tTJSVariant option_indent(OPTION_INDENT);
 		tTJSVariant option_const(OPTION_CONST);
 		tTJSVariant option_keysort(OPTION_KEYSORT);
