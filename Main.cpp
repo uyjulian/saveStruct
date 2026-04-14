@@ -355,10 +355,10 @@ NCB_ATTACH_CLASS(DictAdd, Dictionary) {
 /**
  * メソッド追加用
  */
-class ScriptsAdd {
+class ScriptsAddStruct {
 	
 public:
-	ScriptsAdd(){;}
+	ScriptsAddStruct(){;}
 
 	/**
 	 * saveStruct 形式で文字列化
@@ -382,8 +382,8 @@ public:
 	}
 };
 
-NCB_ATTACH_CLASS(ScriptsAdd, Scripts) {
-	RawCallback("toStructString", &ScriptsAdd::toStructString, TJS_STATICMEMBER);
+NCB_ATTACH_CLASS(ScriptsAddStruct, Scripts) {
+	RawCallback("toStructString", &ScriptsAddStruct::toStructString, TJS_STATICMEMBER);
 };
 
 
